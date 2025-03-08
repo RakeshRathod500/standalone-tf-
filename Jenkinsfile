@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        AWS_ACCESS_KEY_ID     = credentials('aws-access-key-id')  // Replace with Jenkins credential ID
-        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')  // Replace with Jenkins credential ID
+        AWS_ACCESS_KEY_ID     = credentials('aws-access-key-id')  // Replace with your Jenkins credential ID
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')  // Replace with your Jenkins credential ID
     }
 
     stages {
@@ -27,17 +27,31 @@ pipeline {
 
         stage('Terraform Plan') {
             steps {
-                bat 'terraform plan'
+                bat 'terraform plan -out=tfplan'
+            }
+        }
+
+        stage('Terraform Apply') {
+            steps {
+                input message: 'Do you want to apply these changes?', ok: 'Apply'
+                bat 'terraform apply tfplan'
+            }
+        }
+
+        stage('Terraform Destroy') {
+            steps {
+                input message: 'Are you sure you want to destroy the resources?', ok: 'Destroy'
+                bat 'terraform destroy'
             }
         }
     }
 
     post {
         success {
-            echo 'Terraform plan executed successfully!'
+            echo 'Terraform execution completed successfully!'
         }
         failure {
-            echo 'Terraform plan failed!'
+            echo 'Terraform execution failed!'
         }
     }
 }
